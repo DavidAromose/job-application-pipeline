@@ -1,0 +1,36 @@
+# --- secrets / credentials ---
+.env
+.env.*
+!.env.example
+credentials/
+*token*.json
+client_secret*.json
+*.credentials.json
+
+# --- personal data ---
+# Your master resume and any tailored output contain personal information.
+*.docx
+!template-master-resume.docx
+master-resume.docx
+jobs/
+output/
+
+# --- python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- playwright ---
+.playwright/
+
+# --- os / editor ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+~$*

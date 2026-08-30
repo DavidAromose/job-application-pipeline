@@ -1,0 +1,19 @@
+# Core
+python-dotenv>=1.0.1
+anthropic>=0.40.0
+
+# Scraper
+playwright>=1.47.0
+beautifulsoup4>=4.12.3
+lxml>=5.3.0
+
+# Resume + PDF
+python-docx>=1.1.2
+
+# Contacts
+requests>=2.32.3
+
+# Google (Gmail draft + Sheets log)
+google-api-python-client>=2.147.0
+google-auth>=2.35.0
+google-auth-oauthlib>=1.2.1
