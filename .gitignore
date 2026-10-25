@@ -8,8 +8,11 @@ client_secret*.json
 *.credentials.json
 
 # --- personal data ---
-# Your master resume and any tailored output contain personal information.
+# Your master resume and any tailored output (docx/pdf) contain personal information.
+# This project folder doubles as your personal workspace, so anything exported here
+# (e.g. David_Aromose_Master_Resume*.pdf) must never be picked up by a public commit.
 *.docx
+*.pdf
 !template-master-resume.docx
 master-resume.docx
 jobs/

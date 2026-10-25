@@ -42,6 +42,12 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     p.add_argument("--skip-contacts", action="store_true")
     p.add_argument("--skip-draft", action="store_true")
     p.add_argument("--skip-log", action="store_true")
+    p.add_argument("--outreach", action="store_true",
+                   help="find contacts + create a Gmail draft (default depends on OUTREACH_DEFAULT)")
+    p.add_argument("--no-outreach", action="store_true",
+                   help="never find contacts / create a draft this run")
+    p.add_argument("--no-statement", action="store_true",
+                   help="skip writing the supporting statement / cover letter")
     p.add_argument("--show-browser", action="store_true")
     p.add_argument("--dry-run", action="store_true")
     return p.parse_args(argv)
@@ -51,6 +57,10 @@ def main(argv: list[str]) -> int:
     args = parse_args(argv)
     if args.dry_run:
         args.skip_contacts = args.skip_draft = args.skip_log = True
+    # Outreach (contact lookup + Gmail draft) is config-driven, overridable per run.
+    do_outreach = (CONFIG.outreach_default or args.outreach) and not args.no_outreach
+    if not do_outreach:
+        args.skip_contacts = args.skip_draft = True
 
     from pipeline.scraper import JobPosting, parse_html, scrape_job
 
@@ -108,11 +118,42 @@ def main(argv: list[str]) -> int:
             print(f"      model note: {n}")
 
         print("[3/7] Rendering PDF (LibreOffice headless)...")
-        from pipeline.pdf import docx_to_pdf
+        from pipeline.pdf import docx_to_pdf, pdf_page_count
 
         pdf_path = docx_to_pdf(docx_path, out_dir)
-        print(f"      Wrote {pdf_path}")
+        pages = pdf_page_count(pdf_path)
+        if pages > 1:
+            print(f"      {pages} pages - retrying in compact layout to fit one page")
+            build_docx(resume, job, docx_path, compact=True)
+            pdf_path = docx_to_pdf(docx_path, out_dir)
+            pages = pdf_page_count(pdf_path)
+        print(f"      Wrote {pdf_path} ({pages} page{'s' if pages != 1 else ''})")
+        if pages > 1:
+            print("      WARNING: still over one page - trim bullets before sending.")
         summary["resume"] = pdf_path
+
+        met, total, ess_gaps = resume.fit()
+        verdict = ("STRONG FIT" if total and not ess_gaps else
+                   "LONG SHOT" if total and len(ess_gaps) * 2 >= total else
+                   "PARTIAL FIT" if total else "FIT UNKNOWN")
+        summary["fit"] = f"{verdict}: meets {met}/{total} essential criteria"
+        print(f"      FIT: {summary['fit']}")
+        for gap in ess_gaps:
+            print(f"      ESSENTIAL GAP: {gap}")
+
+        if not args.no_statement:
+            from pipeline.resume import extract_master as _em
+            from pipeline.statement import build_statement_docx, write_statement
+
+            print("      Writing supporting statement...")
+            master_text = chr(10).join(b.text for b in _em())
+            st_text = write_statement(job, resume, master_text)
+            st_docx = build_statement_docx(
+                st_text, job, out_dir / f"{_slug(job.company)}_{_slug(job.title)}_statement.docx"
+            )
+            st_pdf = docx_to_pdf(st_docx, out_dir)
+            summary["statement"] = st_pdf
+            print(f"      Wrote {st_pdf}")
     except Exception as exc:  # noqa: BLE001
         print(f"      resume/PDF step failed: {exc}")
         traceback.print_exc()
@@ -162,12 +203,18 @@ def main(argv: list[str]) -> int:
             from pipeline.sheet_log import append_row
 
             print("[6/7] Logging to Google Sheet...")
+            gap_note = summary.get("fit", "")
+            if resume and resume.gaps():
+                gap_note += " | GAPS vs advert: " + "; ".join(resume.gaps())[:400]
             append_row(
                 company=job.company,
                 role=job.title,
                 url=args.url,
                 contacts=[f"{c.name} ({c.title})" for c in contacts],
                 status=status,
+                track="Track 2" if (resume and resume.is_tech) else "Track 1",
+                cv_version=Path(pdf_path).name if pdf_path else "",
+                notes=gap_note,
             )
             summary["log"] = "appended"
         except Exception as exc:  # noqa: BLE001

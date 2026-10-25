@@ -26,6 +26,10 @@ to people at the hiring company. Constraints:
 - Only use facts present in the provided resume summary and job posting. Never \
 invent metrics, experience or claims.
 - One concrete reason the candidate fits, phrased honestly for an early-career hire.
+- Do NOT lead with or foreground the candidate's undergraduate degree/classification as the \
+pitch - it reads thin. Prefer real project work, the actual jobs held, and genuine motivation \
+instead. The degree can be mentioned in passing (e.g. dating the MRes) but is never the reason \
+given for fit.
 - Say the candidate "is applying" / "is submitting an application" for the role - \
 do NOT claim they have already applied.
 - Mention the attached CV and the role title. Ask for a brief conversation or to \
