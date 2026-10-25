@@ -62,3 +62,19 @@ def docx_to_pdf(docx_path, out_dir=None) -> str:
             f"stdout: {result.stdout}\nstderr: {result.stderr}"
         )
     return str(pdf_path)
+
+
+def pdf_page_count(pdf_path) -> int:
+    """Number of pages in a PDF (pypdf if installed, else a robust byte-level count)."""
+    try:
+        from pypdf import PdfReader
+
+        return len(PdfReader(str(pdf_path)).pages)
+    except ImportError:
+        import re
+
+        data = Path(pdf_path).read_bytes()
+        counts = [int(n) for n in re.findall(rb"/Count\s+(\d+)", data)]
+        if counts:
+            return max(counts)
+        return len(re.findall(rb"/Type\s*/Page[^s]", data))

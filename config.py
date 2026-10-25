@@ -38,6 +38,9 @@ class Applicant:
     location: str = _get("APPLICANT_LOCATION")
     linkedin: str = _get("APPLICANT_LINKEDIN")
     github: str = _get("APPLICANT_GITHUB")
+    # Optional header lines. Only printed when set - never asserted by default.
+    right_to_work: str = _get("APPLICANT_RIGHT_TO_WORK")  # e.g. "Right to work in the UK"
+    availability: str = _get("APPLICANT_AVAILABILITY")  # e.g. "Available for evening/weekend shifts"
 
 
 @dataclass
@@ -64,6 +67,15 @@ class Config:
 
     # PDF
     soffice_path: str = _get("SOFFICE_PATH")
+
+    # CV presentation
+    # Links (GitHub/LinkedIn) are only shown on technology/data/AI roles, and only if true.
+    cv_show_links: bool = _get("CV_SHOW_LINKS", "false").lower() in ("1", "true", "yes")
+    # Contact discovery + Gmail draft are opt-in per run via --outreach when this is false.
+    outreach_default: bool = _get("OUTREACH_DEFAULT", "true").lower() in ("1", "true", "yes")
+    # Gmail read-only inbox access (for response tracking). Off unless explicitly enabled;
+    # enabling it adds the gmail.readonly scope, so re-run authorize.py afterwards.
+    inbox_access: bool = _get("INBOX_ACCESS", "false").lower() in ("1", "true", "yes")
 
     # Files
     master_resume_path: Path = PROJECT_ROOT / _get(

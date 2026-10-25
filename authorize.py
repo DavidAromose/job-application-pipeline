@@ -9,6 +9,6 @@ credentials/token.json and the pipeline reuses it automatically.
 from pipeline.google_auth import get_credentials
 
 if __name__ == "__main__":
-    creds = get_credentials()
+    creds = get_credentials(force_consent=True)
     print("Authorized. Token saved to credentials/token.json")
     print("Scopes:", creds.scopes)
